@@ -1,0 +1,16 @@
+{
+    "keepSettings": {
+        "type": 1,
+        "amount": 2
+    },
+    "auditFilename": "logs/audit.json",
+    "hashType": "md5",
+    "extension": "",
+    "files": [
+        {
+            "date": 1749013150205,
+            "name": "/home/alf/dev/utec/JuicyShop-Vuln/juicyshop_original/logs/access.log.2025-06-04",
+            "hash": "8d7e759f27045dd388c1263c33cc4271"
+        }
+    ]
+}

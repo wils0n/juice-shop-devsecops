@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juicyshop-vuln-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: juicyshop-vuln
+  template:
+    metadata:
+      labels:
+        app: juicyshop-vuln
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: juicyshop-vuln
+        image: myregistry/juicyshop:vuln
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        env:
+        - name: DB_CONNECTION
+          value: "mongodb://mongo:27017/juicyshop"
+        - name: ADMIN_PASSWORD
+          value: "Admin1234"
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+      imagePullSecrets:
+      - name: regcred
