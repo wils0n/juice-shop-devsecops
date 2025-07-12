@@ -1,4 +1,4 @@
-# Módulo 2: SAST y DAST aplicado a Juicy Shop - DevSecOps
+# SAST aplicado a Juicy Shop - DevSecOps
 
 ---
 
@@ -26,7 +26,7 @@ Practicar análisis SAST y DAST usando múltiples herramientas y variantes sobre
 
 ---
 
-## 1. Ejecución de SAST y detección de secretos
+## 1. Ejecución de SAST
 
 ### 1.1. SonarQube/SonarScanner
 
@@ -144,6 +144,86 @@ docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 `
   "-Dsonar.exclusions=**/test/**" `
   "-Dsonar.login=TU_TOKEN" `
   "-Dsonar.issuesReport.json.enable=true"
+```
+
+### 🔧 Guía: Configurar SonarCloud con Azure DevOps
+
+Esta guía te ayudará a integrar SonarCloud en tu flujo de trabajo de Azure DevOps para realizar análisis de calidad y seguridad del código en tus pipelines.
+
+---
+
+#### Requisitos previos
+
+- Tener una cuenta en [Azure DevOps](https://dev.azure.com)
+- Tener una cuenta en [SonarCloud](https://sonarcloud.io)
+- Un repositorio en Azure DevOps con código fuente
+- Tener permisos para crear proyectos en SonarCloud
+
+---
+
+#### a) Crear un nuevo proyecto en SonarCloud
+
+1. Ve a [https://sonarcloud.io/projects/create](https://sonarcloud.io/projects/create)
+2. Elige la organización a la que quieres asociar el proyecto
+3. Selecciona **create a project manually.** que está al lado derecho
+4. Escribe **Display Name** y **Project Key**
+5. Selecciona visibilidad **Private**
+
+---
+
+#### b) Generar un token en SonarCloud
+
+1. Ve a [https://sonarcloud.io/account/security](https://sonarcloud.io/account/security)
+2. Escribe un nombre para tu token (por ejemplo: `azure-pipeline-token`)
+3. Haz clic en **Generate Token**
+4. Guarda el token generado: lo necesitarás para la configuración del pipeline (no se vuelve a mostrar)
+
+---
+
+#### c) Agregar el token en Azure DevOps como variable secreta
+
+1. Ve a tu proyecto en Azure DevOps
+2. Dirígete a **Pipelines > Library**
+3. Crea un nuevo **Variable Group** (por ejemplo: `SonarCloud`)
+4. Agrega una variable:
+   - **Name:** `SONAR_TOKEN`
+   - **Value:** (pega el token de SonarCloud)
+   - Marca la opción **"Keep this value secret"**
+5. Guarda el grupo de variables
+
+---
+
+#### d) Configurar el pipeline YAML
+
+En la raíz de tu repositorio, agrega un archivo llamado `azure-pipelines.yml` con el siguiente contenido básico:
+
+```yaml
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "20.x"
+    displayName: "Install Node.js"
+
+  - script: |
+      export SONAR_SCANNER_VERSION=7.0.2.4839
+      export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux-x64
+      curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux-x64.zip
+      unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
+      export PATH=$SONAR_SCANNER_HOME/bin:$PATH
+      export SONAR_SCANNER_OPTS="-server"
+      sonar-scanner \
+        -Dsonar.organization=<organization_name> \
+        -Dsonar.projectKey=juice-shop-devsecops \
+        -Dsonar.sources=. \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.login=$(SONAR_TOKEN)  \
+        -Dsonar.c.file.suffixes=- \
+        -Dsonar.cpp.file.suffixes=- \
+        -Dsonar.objc.file.suffixes=-
+    displayName: "SonarCloud Analysis"
 ```
 
 ### 1.2. Bandit
